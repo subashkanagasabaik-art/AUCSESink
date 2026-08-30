@@ -306,56 +306,6 @@ async function postClassMessage(key, dept, yr) {
   document.getElementById(`comm-text-${key}`).value = '';
 }
 
-function appendPostToDOM(post) {
-  let targetListId = '';
-  
-  if (post.category === 'event' || post.department === 'dashboard') {
-    targetListId = 'events-list';
-  } else if (post.category === 'notes' || post.category === 'opinion') {
-    targetListId = `notes-${post.department}-${post.academic_year}`;
-  } else if (post.category === 'class_comm') {
-    targetListId = `comm-${post.department}-${post.academic_year}`;
-  }
-
-  const list = document.getElementById(targetListId);
-  if (!list) return;
-
-  // Check if image_url points to an image file or a PDF file
-  let mediaHTML = '';
-  if (post.image_url) {
-    const urlLower = post.image_url.toLowerCase();
-    const isImage = urlLower.endsWith('.jpg') || urlLower.endsWith('.jpeg') || urlLower.endsWith('.png') || urlLower.endsWith('.webp') || urlLower.endsWith('.gif');
-
-    if (isImage) {
-      mediaHTML = `
-        <div style="margin-top: 10px; text-align: center; background: #000; border-radius: 10px; overflow: hidden;">
-          <img src="${post.image_url}" style="width: 100%; max-height: 320px; object-fit: contain; display: block;" alt="Uploaded Poster"/>
-        </div>`;
-    } else {
-      mediaHTML = `
-        <div style="margin-top: 8px;">
-          <a href="${post.image_url}" target="_blank" class="pdf-download-btn">
-            📄 Download / View Attached PDF
-          </a>
-        </div>`;
-    }
-  }
-
-  const li = document.createElement('li');
-  li.className = 'feed-item';
-  li.innerHTML = `
-    <div class="feed-header">
-      <span class="feed-author" style="font-weight:600; font-size:0.85rem; color:var(--text-main);">${post.author_name}</span>
-      <span style="font-size:0.75rem; color:var(--text-muted);">${new Date(post.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-    </div>
-    ${post.title ? `<strong style="font-size:0.95rem; color:var(--text-main); display:block; margin: 4px 0;">${post.title}</strong>` : ''}
-    <p style="font-size: 0.85rem; margin-top: 4px; color: var(--text-muted); line-height: 1.4;">${post.content}</p>
-    ${mediaHTML}
-  `;
-  
-  list.prepend(li);
-}
-
 function triggerNotification(msg) {
   const toast = document.getElementById('notification-toast');
   if (!toast) return;
@@ -668,6 +618,7 @@ document.addEventListener("DOMContentLoaded", () => {
   loadDynamicCarousels();
   fetchLiveExternalNews();
 });
+
 // --- SECURE DEPARTMENT & ROLE CHECK FOR POSTING ---
 function canUserPostToDepartment(targetDept, targetYear) {
   if (!currentUser) return false;
@@ -702,7 +653,7 @@ async function postNoteWithPDF(key, dept, yr) {
   
   const type = typeElement ? typeElement.value : 'notes';
   const text = textElement ? textElement.value.trim() : '';
-  const file = fileInput && fileInput.files.length > 0 ? fileInput.files.length[0] || fileInput.files[0] : null;
+  const file = fileInput && fileInput.files.length > 0 ? fileInput.files[0] : null;
 
   if (!text && !file) {
     return alert('Please provide text descriptions or select a file to upload.');
@@ -753,6 +704,7 @@ async function postNoteWithPDF(key, dept, yr) {
   alert('Published successfully!');
   loadAllPosts();
 }
+
 // --- UPDATE `appendPostToDOM` TO RENDER PDF ATTACHMENTS ---
 function appendPostToDOM(post) {
   let targetListId = '';
@@ -811,9 +763,11 @@ function appendPostToDOM(post) {
   
   list.prepend(li);
 }
+
+// --- VANTA.JS BIRDS BACKGROUND ANIMATION ---
 window.addEventListener('DOMContentLoaded', () => {
   VANTA.BIRDS({
-    el: "body", // Target element selector (can be "body" or a specific container ID like "#hero")
+    el: "body",
     mouseControls: true,
     touchControls: true,
     gyroControls: false,
@@ -821,14 +775,14 @@ window.addEventListener('DOMContentLoaded', () => {
     minWidth: 200.00,
     scale: 1.00,
     scaleMobile: 1.00,
-    backgroundColor: 0x0f172a, // Matches your deep dark blue theme background
-    color1: 0xff3366,          // Primary bird color (pinkish red)
-    color2: 0xff6699,          // Secondary bird color
+    backgroundColor: 0x0f172a,
+    color1: 0xff3366,
+    color2: 0xff6699,
     birdSize: 1.20,
     speedLimit: 4.00,
     separation: 50.00,
     alignment: 50.00,
     cohesion: 50.00,
-    quantity: 3.00             // Number of birds/polygons flocking
+    quantity: 3.00
   });
 });
