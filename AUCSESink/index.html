@@ -1,0 +1,453 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AUCSE Sink - Academic Hub Dashboard</title>
+    <link rel="stylesheet" href="style.css" />
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Add DOMPurify to your HTML files -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.8/purify.min.js"></script>
+<!-- Three.js dependency -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r121/three.min.js"></script>
+<!-- Vanta.js Birds Effect -->
+<script src="https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.birds.min.js"></script>
+  </head>
+  <body>
+    <!-- Auth Modal (Student Login & Registration) -->
+    <div id="auth-modal" class="auth-modal" style="display: flex">
+      <div class="auth-card">
+        <h2 id="auth-title">Student Login</h2>
+        <p
+          id="auth-subtitle"
+          style="
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-bottom: 20px;
+          "
+        >
+          Enter your credentials to access your portal.
+        </p>
+
+        <!-- STUDENT FORM -->
+        <form id="student-auth-form" onsubmit="handleAuthAction(event)">
+          <input type="hidden" id="auth-mode" value="login" />
+
+          <div class="form-group" id="field-fullname" style="display: none">
+            <label>Full Name:</label>
+            <input type="text" id="reg-name" placeholder="e.g. Joseph Vijay" />
+          </div>
+
+          <div class="form-group" id="field-rollno">
+            <label>Roll Number:</label>
+            <input
+              type="text"
+              id="input-rollno"
+              placeholder="e.g. 2326269001"
+              required
+            />
+          </div>
+
+          <div class="form-group" id="field-password">
+            <label>Password:</label>
+            <input
+              type="password"
+              id="input-pass"
+              placeholder="Enter your password"
+              required
+            />
+          </div>
+
+          <div class="form-group" id="field-dept" style="display: none">
+            <label>Department:</label>
+            <select id="reg-dept">
+              <option value="cse">Computer Science (CSE)</option>
+              <option value="ds">Data Science (DS)</option>
+              <option value="aiml">AI & Machine Learning (AIML)</option>
+            </select>
+          </div>
+
+          <div class="form-group" id="field-year" style="display: none">
+            <label>Academic Year:</label>
+            <select id="reg-year">
+              <option value="2nd">2nd Year</option>
+              <option value="3rd">3rd Year</option>
+              <option value="final">Final Year</option>
+            </select>
+          </div>
+
+          <button
+            type="submit"
+            id="auth-btn"
+            class="btn-submit"
+            style="width: 100%; margin-top: 16px"
+          >
+            Sign In
+          </button>
+        </form>
+
+        <!-- Switch Links -->
+        <div
+          style="
+            margin-top: 16px;
+            text-align: center;
+            font-size: 0.85rem;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+          "
+        >
+          <a
+            href="#"
+            id="switch-to-register"
+            onclick="
+              switchFormMode('register');
+              return false;
+            "
+            style="color: var(--primary-color); text-decoration: none"
+            >New student? Register here (One-time)</a
+          >
+          <a
+            href="#"
+            id="switch-to-login"
+            onclick="
+              switchFormMode('login');
+              return false;
+            "
+            style="
+              color: var(--primary-color);
+              text-decoration: none;
+              display: none;
+            "
+            >Already registered? Back to Login</a
+          >
+        </div>
+      </div>
+    </div>
+
+    <!-- Dedicated Admin Portal Modal -->
+    <div id="admin-portal-modal" class="auth-modal" style="display: none">
+      <div class="auth-card">
+        <h2>Admin / Officer Portal</h2>
+        <p
+          style="
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-bottom: 20px;
+          "
+        >
+          Sign in as Representative, President, Secretary, or Executive.
+        </p>
+
+        <form onsubmit="handleAdminAuthAction(event)">
+          <div class="form-group">
+            <label>Official Name:</label>
+            <input
+              type="text"
+              id="portal-admin-name"
+              placeholder="Official Full Name"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label>Passkey:</label>
+            <input
+              type="password"
+              id="portal-admin-passkey"
+              placeholder="Enter passkey"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label>Position / Role:</label>
+            <select id="portal-admin-role">
+              <option value="representative">Department Representative</option>
+              <option value="president">President</option>
+              <option value="secretary">Secretary</option>
+              <option value="executive">Executive</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Department Scope:</label>
+            <select id="portal-admin-scope">
+              <option value="cse">CSE Only</option>
+              <option value="ds">DS Only</option>
+              <option value="aiml">AIML Only</option>
+              <option value="all">All Departments (Global)</option>
+            </select>
+          </div>
+
+          <button
+            type="submit"
+            class="btn-submit"
+            style="width: 100%; margin-top: 16px; background: #d97706"
+          >
+            Official Sign In
+          </button>
+        </form>
+
+        <div style="margin-top: 16px; text-align: center">
+          <a
+            href="#"
+            onclick="
+              closeAdminPortalModal();
+              return false;
+            "
+            style="
+              color: var(--text-muted);
+              font-size: 0.85rem;
+              text-decoration: none;
+            "
+            >Cancel / Close</a
+          >
+        </div>
+      </div>
+    </div>
+
+    <div class="main-container">
+      <nav class="top-navbar">
+        <div class="logo">AUCSE Sink Hub</div>
+        <div class="top-nav-links">
+          <a href="index.html" class="top-nav-item active">🏠 Home</a>
+          <a href="cse.html" class="top-nav-item">💻 CSE</a>
+          <a href="ds.html" class="top-nav-item">📊 DS</a>
+          <a href="aiml.html" class="top-nav-item">🤖 AIML</a>
+
+          <!-- ⚙️ Manage Carousels Link (Visible for quick access) -->
+          <a
+            href="admin-manage.html"
+            class="top-nav-item"
+            style="color: #d97706; font-weight: 700"
+            >⚙️ Manage Carousels</a
+          >
+
+          <a
+            href="#"
+            onclick="
+              openAdminPortalModal();
+              return false;
+            "
+            class="top-nav-item"
+            style="color: #d97706; font-weight: 700"
+            >🛡️ Admin Portal</a
+          >
+        </div>
+        <div style="display: flex; align-items: center; gap: 16px">
+          <div class="user-profile" style="text-align: right">
+            <div class="name" id="user-display-name">Guest</div>
+            <div class="handle" id="user-display-role">NOT LOGGED IN</div>
+          </div>
+          <button
+            onclick="handleLogout()"
+            class="btn-submit"
+            style="
+              margin-top: 0;
+              padding: 6px 12px;
+              background: #ef4444;
+              font-size: 0.8rem;
+            "
+          >
+            Logout
+          </button>
+        </div>
+      </nav>
+
+      <div class="dashboard-content">
+        <!-- LEFT COLUMN -->
+        <div class="content-left">
+          <h1 style="color: #ffffff !important; font-weight: 700; margin-bottom: 16px;">Departments & Classrooms</h1>
+          <div class="dept-cards-grid">
+            <a href="cse.html" class="dept-card cse">
+              <div>
+                <span>💻</span>
+                <h3>CSE</h3>
+              </div>
+              <p>Computer Science & Engineering</p>
+            </a>
+            <a href="ds.html" class="dept-card ds">
+              <div>
+                <span>📊</span>
+                <h3>DS</h3>
+              </div>
+              <p>Data Science</p>
+            </a>
+            <a href="aiml.html" class="dept-card aiml">
+              <div>
+                <span>🤖</span>
+                <h3>AIML</h3>
+              </div>
+              <p>AI & Machine Learning</p>
+            </a>
+          </div>
+
+          <!-- 1. Upcoming Campus Events (Connected to Supabase & Admin Management) -->
+          <div class="card animate-card" style="margin-top: 24px">
+            <h3>Upcoming Campus Events</h3>
+            <div class="scrolling-section">
+              <div class="scroll-container" id="dynamic-events-scroll">
+                <!-- Fallback static items if database is empty -->
+                <div class="scroll-item">
+                  <span class="badge badge-event">Tech Fest</span>
+                  <h4>AUCSE Symposium '26</h4>
+                  <p style="font-size: 0.85rem; color: var(--text-muted)">
+                    Annual coding and robotics showdown starting next week.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 2. Student & Faculty Achievements (Connected to Supabase & Admin Management) -->
+          <div class="card animate-card" style="margin-top: 24px">
+            <h3>Student & Faculty Achievements</h3>
+            <div class="scrolling-section">
+              <div class="scroll-container" id="dynamic-achievements-scroll">
+                <!-- Fallback static items if database is empty -->
+                <div class="scroll-item">
+                  <span
+                    class="badge"
+                    style="background: #dbeafe; color: #1e40af"
+                    >Award</span
+                  >
+                  <h4>Smart India Hackathon Winner</h4>
+                  <p style="font-size: 0.85rem; color: var(--text-muted)">
+                    Final year CSE team bags 1st place nationally.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 3. Placement & Hiring Section -->
+          <div class="card" style="margin-top: 24px">
+            <h3>
+              Placement & Hiring Updates
+              <span
+                style="
+                  font-size: 0.75rem;
+                  background: var(--primary-color);
+                  color: #fff;
+                  padding: 2px 8px;
+                  border-radius: 12px;
+                "
+                >Active</span
+              >
+            </h3>
+            <ul class="item-list" id="placements-list">
+              <li>Loading active hiring drives...</li>
+            </ul>
+          </div>
+
+          <!-- 4. Open General Discussion Section -->
+          <div class="card" style="margin-top: 24px">
+            <h3>Open General Discussion</h3>
+            <ul class="item-list" id="comments-dashboard"></ul>
+            <div class="form-group">
+              <textarea
+                id="text-dashboard"
+                placeholder="Write an open message to the campus..."
+              ></textarea>
+              <button class="btn-submit" onclick="postDashboardComment()">
+                Post Comment
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT COLUMN -->
+        <div class="content-right">
+          <div class="card" id="events-card">
+            <h3>
+              Campus Events & News
+              <span class="badge badge-event">Official</span>
+            </h3>
+
+            <!-- Combined list showing both official announcements AND live news -->
+            <ul class="item-list" id="events-list"></ul>
+
+            <!-- 🌍 Live News Sub-section inside the same card -->
+            <div
+              style="
+                margin-top: 20px;
+                border-top: 1px solid var(--border-color);
+                padding-top: 15px;
+              "
+            >
+              <h4
+                style="
+                  font-size: 0.95rem;
+                  margin-bottom: 10px;
+                  color: var(--text-main);
+                "
+              >
+                Live India & Tech Feed
+                <span class="badge" style="background: #e0f2fe; color: #0369a1"
+                  >Live</span
+                >
+              </h4>
+              <ul class="item-list" id="external-news-list">
+                <li>Loading live news stream...</li>
+              </ul>
+            </div>
+
+            <!-- Admin / Officer Event Publishing Controls -->
+            <div
+              id="admin-event-controls"
+              style="
+                display: none;
+                margin-top: 15px;
+                border-top: 1px solid var(--border-color);
+                padding-top: 15px;
+              "
+            >
+              <h4>Publish Event / Poster</h4>
+              <div class="form-group">
+                <input type="text" id="event-title" placeholder="Event Title" />
+                <textarea
+                  id="event-desc"
+                  placeholder="Event description & venue..."
+                ></textarea>
+
+                <label
+                  style="
+                    font-size: 0.85rem;
+                    color: var(--text-muted);
+                    margin-top: 6px;
+                  "
+                  >Upload Poster / Invitation Image:</label
+                >
+                <input type="file" id="event-file-input" accept="image/*" />
+                <div class="form-group" style="margin-bottom: 12px">
+                  <label
+                    style="
+                      font-size: 0.8rem;
+                      color: #94a3b8;
+                      display: block;
+                      margin-bottom: 4px;
+                    "
+                    >Event Expiry Date:</label
+                  >
+                  <input
+                    type="date"
+                    id="event-expiry-date"
+                    style="font-size: 0.85rem"
+                  />
+                </div>
+
+                <button class="btn-submit" onclick="publishEventWithImage()">
+                  Publish Announcement
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="notification-toast"></div>
+    <script src="script.js"></script>
+  </body>
+</html>
