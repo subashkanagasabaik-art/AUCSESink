@@ -4,6 +4,19 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>CSE Department Portal - AUCSE Sink</title>
+  
+  <!-- 🛡️ STRICT DEPARTMENT ACCESS GUARD -->
+  <script>
+    const userRole = localStorage.getItem('userRole');
+    const userDept = localStorage.getItem('userDepartment');
+
+    // If a student user belongs to a different department, block and redirect immediately
+    if (userRole === 'student' && userDept !== 'cse') {
+      alert('Access Denied: You can only view your own department portal.');
+      window.location.replace('index.html');
+    }
+  </script>
+
   <link rel="stylesheet" href="style.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <!-- Add DOMPurify to your HTML files -->
